@@ -1,0 +1,15 @@
+/home/mayrton/code/tcc/backend/src/Application/bin/Debug/net9.0/QuizGamificado.Application.deps.json
+/home/mayrton/code/tcc/backend/src/Application/bin/Debug/net9.0/QuizGamificado.Application.dll
+/home/mayrton/code/tcc/backend/src/Application/bin/Debug/net9.0/QuizGamificado.Application.pdb
+/home/mayrton/code/tcc/backend/src/Application/bin/Debug/net9.0/QuizGamificado.Domain.dll
+/home/mayrton/code/tcc/backend/src/Application/bin/Debug/net9.0/QuizGamificado.Domain.pdb
+/home/mayrton/code/tcc/backend/src/Application/obj/Debug/net9.0/QuizGamificado.Application.csproj.AssemblyReference.cache
+/home/mayrton/code/tcc/backend/src/Application/obj/Debug/net9.0/QuizGamificado.Application.GeneratedMSBuildEditorConfig.editorconfig
+/home/mayrton/code/tcc/backend/src/Application/obj/Debug/net9.0/QuizGamificado.Application.AssemblyInfoInputs.cache
+/home/mayrton/code/tcc/backend/src/Application/obj/Debug/net9.0/QuizGamificado.Application.AssemblyInfo.cs
+/home/mayrton/code/tcc/backend/src/Application/obj/Debug/net9.0/QuizGamificado.Application.csproj.CoreCompileInputs.cache
+/home/mayrton/code/tcc/backend/src/Application/obj/Debug/net9.0/QuizGami.8D970E82.Up2Date
+/home/mayrton/code/tcc/backend/src/Application/obj/Debug/net9.0/QuizGamificado.Application.dll
+/home/mayrton/code/tcc/backend/src/Application/obj/Debug/net9.0/refint/QuizGamificado.Application.dll
+/home/mayrton/code/tcc/backend/src/Application/obj/Debug/net9.0/QuizGamificado.Application.pdb
+/home/mayrton/code/tcc/backend/src/Application/obj/Debug/net9.0/ref/QuizGamificado.Application.dll

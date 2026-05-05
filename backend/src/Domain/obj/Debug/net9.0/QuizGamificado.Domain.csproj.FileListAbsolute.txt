@@ -1,0 +1,11 @@
+/home/mayrton/code/tcc/backend/src/Domain/bin/Debug/net9.0/QuizGamificado.Domain.deps.json
+/home/mayrton/code/tcc/backend/src/Domain/bin/Debug/net9.0/QuizGamificado.Domain.dll
+/home/mayrton/code/tcc/backend/src/Domain/bin/Debug/net9.0/QuizGamificado.Domain.pdb
+/home/mayrton/code/tcc/backend/src/Domain/obj/Debug/net9.0/QuizGamificado.Domain.GeneratedMSBuildEditorConfig.editorconfig
+/home/mayrton/code/tcc/backend/src/Domain/obj/Debug/net9.0/QuizGamificado.Domain.AssemblyInfoInputs.cache
+/home/mayrton/code/tcc/backend/src/Domain/obj/Debug/net9.0/QuizGamificado.Domain.AssemblyInfo.cs
+/home/mayrton/code/tcc/backend/src/Domain/obj/Debug/net9.0/QuizGamificado.Domain.csproj.CoreCompileInputs.cache
+/home/mayrton/code/tcc/backend/src/Domain/obj/Debug/net9.0/QuizGamificado.Domain.dll
+/home/mayrton/code/tcc/backend/src/Domain/obj/Debug/net9.0/refint/QuizGamificado.Domain.dll
+/home/mayrton/code/tcc/backend/src/Domain/obj/Debug/net9.0/QuizGamificado.Domain.pdb
+/home/mayrton/code/tcc/backend/src/Domain/obj/Debug/net9.0/ref/QuizGamificado.Domain.dll
