@@ -1,3 +1,0 @@
-﻿<Project>
-  <Import Project="../build/QuizGamificado.API.props" />
-</Project>
