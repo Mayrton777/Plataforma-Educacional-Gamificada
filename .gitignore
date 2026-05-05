@@ -1,0 +1,53 @@
+# =========================
+# Node.js / React (Vite)
+# =========================
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Variáveis de ambiente
+.env
+.env.*
+!.env.example
+
+# Logs do NPM
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =========================
+# .NET / C#
+# =========================
+# Pastas de compilação
+bin/
+obj/
+
+# Arquivos de usuário do Visual Studio / VS Code
+*.user
+*.userosscache
+*.sln.docstates
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.vs/
+
+# Arquivos temporários e de cache
+*.cache
+*.suo
+*.rsuser
+*.dbmdl
+*.dbproj.schemaview
+*.pfx
+*.publishsettings
+
+# =========================
+# Sistema Operacional
+# =========================
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
