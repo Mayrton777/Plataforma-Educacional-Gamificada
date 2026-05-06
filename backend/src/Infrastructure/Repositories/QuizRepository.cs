@@ -15,13 +15,13 @@ namespace QuizGamificado.Infrastructure.Repositories
         }
 
         public async Task<Quiz?> GetByIdAsync(Guid id)
-        {
-            // A tela do Jogo precisa de tudo: do Quiz, das Perguntas e das Alternativas!
-            return await _context.Quizzes
-                .Include(q => q.Perguntas)
-                    .ThenInclude(p => p.Alternativas) // Inclui os "filhos" das perguntas
-                .FirstOrDefaultAsync(q => q.Id == id);
-        }
+    {
+        return await _context.Quizzes
+            .Include(q => q.Perguntas)
+                .ThenInclude(p => p.Alternativas.OrderBy(a => a.Id))
+            .AsSplitQuery()
+            .FirstOrDefaultAsync(q => q.Id == id);
+    }
 
         public async Task<IEnumerable<Quiz>> GetAllAsync()
         {

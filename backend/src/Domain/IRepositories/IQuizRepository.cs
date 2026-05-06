@@ -7,7 +7,7 @@ namespace QuizGamificado.Domain.IRepositories
 {
     public interface IQuizRepository
     {
-        Task<Quiz> GetByIdAsync(Guid id);
+        Task<Quiz?> GetByIdAsync(Guid id);
         Task<IEnumerable<Quiz>> GetAllAsync();
         Task AddAsync(Quiz quiz);
         Task UpdateAsync(Quiz quiz);

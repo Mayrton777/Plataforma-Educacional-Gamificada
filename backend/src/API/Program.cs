@@ -2,18 +2,11 @@ using Microsoft.EntityFrameworkCore;
 using QuizGamificado.Infrastructure.Data;
 using Scalar.AspNetCore;
 using System.Text.Json.Serialization;
+using API.Hubs; // Importa a pasta dos Hubs do SignalR
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Adiciona o suporte para Controllers
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        // Impede o loop infinito na hora de gerar o JSON das entidades do EF Core
-        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
-    });
-
-// Adiciona o suporte para Controllers e resolve o problema de Loop Infinito do JSON
+// Configuração de Controllers e proteção contra Loop Infinito
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -25,7 +18,6 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("PermitirFrontend", policy =>
     {
-        // O Vite/React para a porta 5173 padrão
         policy.WithOrigins("http://localhost:5173") 
               .AllowAnyHeader()
               .AllowAnyMethod()
@@ -33,14 +25,14 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Configuração Nativa do Swagger para documentação da API
+// Configuração Nativa do Swagger/Scalar
 builder.Services.AddOpenApi();
 
-// Injeção de Dependência do Banco de Dados (EF Core)
+// Injeção do Banco de Dados (EF Core)
 builder.Services.AddDbContext<QuizDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Injeção do Repositório e Serviço
+// Injeções de Repositório e Serviço
 builder.Services.AddScoped<QuizGamificado.Domain.IRepositories.IQuizRepository, QuizGamificado.Infrastructure.Repositories.QuizRepository>();
 builder.Services.AddScoped<QuizGamificado.Application.Services.GamificacaoService>();
 
@@ -49,17 +41,18 @@ builder.Services.AddSignalR();
 
 var app = builder.Build();
 
-// Ativa a política de CORS
+// Ativa o CORS
 app.UseCors("PermitirFrontend");
 
-// Ativa a interface visual Scalar para explorar a API
+// Ativa a interface visual Scalar
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.MapScalarApiReference();
 }
 
-// Configuração das rotas
+// Mapeia as Rotas da API e do SignalR
 app.MapControllers();
-app.MapHub<API.Hubs.QuizHub>("/quizhub");
+app.MapHub<QuizHub>("/quizhub");
+
 app.Run();
