@@ -82,10 +82,13 @@ function CriarQuiz() {
     };
 
     try {
-      await api.post('/quiz', novoQuiz);
+      const response = await api.post('/quiz', novoQuiz);
+      const quizId = response.data.id || response.data.Id; 
       
-      // Gera o código e manda para a nova tela
       const codigoDaSala = gerarCodigoSala();
+      
+      localStorage.setItem(`quiz_${codigoDaSala}`, quizId);
+      
       navigate(`/sala/${codigoDaSala}`);
       
     } catch (error) {

@@ -8,21 +8,34 @@ export default function EntrarSala() {
   const navigate = useNavigate();
   const userName = localStorage.getItem("userName") || "User";
 
+  // 👇 Nova função que formata o código automaticamente com o traço
+  const handleMudancaCodigo = (e) => {
+    // Remove tudo que não for letra ou número
+    let valor = e.target.value.replace(/[^a-zA-Z0-9]/g, '');
+    
+    // Adiciona o traço automaticamente após o 4º caractere
+    if (valor.length > 4) {
+      valor = valor.slice(0, 4) + '-' + valor.slice(4, 8);
+    }
+    
+    setCodigo(valor);
+  };
+
   const handleEntrar = (e) => {
     e.preventDefault();
     
+    // Garante que o código vá minúsculo para o Back-end
     const codigoFormatado = codigo.trim().toLowerCase();
     
-    if (codigoFormatado.length >= 8) {
+    if (codigoFormatado.length === 9) { // 8 letras/numeros + 1 traço
       navigate(`/lobby/${codigoFormatado}`); 
     } else {
-      alert("Por favor, digite um código de sala válido (mínimo de 8 caracteres).");
+      alert("Por favor, digite o código completo da sala.");
     }
   };
 
   return (
     <div className="max-w-md mx-auto pt-10 pb-12">
-      {/* Botão Voltar */}
       <div className="mb-6">
         <button 
           onClick={() => navigate('/')}
@@ -32,7 +45,6 @@ export default function EntrarSala() {
         </button>
       </div>
 
-      {/* Card Principal */}
       <motion.div
         initial={{ scale: 0.9, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -55,11 +67,11 @@ export default function EntrarSala() {
             <div className="relative">
               <input
                 type="text"
-                placeholder="Ex: 1a3b-2c4d"
+                placeholder="Ex: 1A3B-2C4D"
                 value={codigo}
-                onChange={(e) => setCodigo(e.target.value)}
+                onChange={handleMudancaCodigo}
                 required
-                maxLength={9} // 8 caracteres + 1 traço
+                maxLength={9} 
                 className="w-full h-16 px-6 text-2xl text-center font-black tracking-widest uppercase bg-muted border-2 border-border focus:border-emerald-500 outline-hidden rounded-2xl transition-all text-foreground placeholder:text-muted-foreground/40 placeholder:font-normal placeholder:tracking-normal"
               />
             </div>
@@ -68,7 +80,7 @@ export default function EntrarSala() {
           <div className="pt-4">
             <button
               type="submit"
-              disabled={codigo.length < 8}
+              disabled={codigo.length !== 9} // Trava se não tiver exatos 9 caracteres
               className="w-full h-16 flex items-center justify-center gap-2 text-xl font-black bg-linear-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-2xl shadow-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <LogIn className="w-6 h-6" />

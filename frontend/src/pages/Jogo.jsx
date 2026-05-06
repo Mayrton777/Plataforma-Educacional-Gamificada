@@ -1,43 +1,97 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../services/api';
+import { motion, AnimatePresence } from 'framer-motion';
+// 👇 A correção está aqui: Crown e Users foram adicionados aos imports!
+import { Timer, Trophy, CheckCircle2, XCircle, Crown, Users } from 'lucide-react';
+import * as signalR from '@microsoft/signalr';
 
-function Jogo() {
+export default function Jogo() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   
+  const { codigoSala, avatar } = location.state || {};
+  const userName = localStorage.getItem("userName") || "Jogador";
+
   const [quiz, setQuiz] = useState(null);
   const [indicePergunta, setIndicePergunta] = useState(0);
   const [tempoRestante, setTempoRestante] = useState(0);
   const [pontuacaoTotal, setPontuacaoTotal] = useState(0);
+  const [tempoTotalGasto, setTempoTotalGasto] = useState(0);
   const [jogoFinalizado, setJogoFinalizado] = useState(false);
   
   const [statusResposta, setStatusResposta] = useState(null);
   const [alternativaSelecionada, setAlternativaSelecionada] = useState(null);
+  
+  const [conexao, setConexao] = useState(null);
+  const [rankingReal, setRankingReal] = useState([]);
+
+  useEffect(() => {
+    if (!codigoSala) return;
+
+    const novaConexao = new signalR.HubConnectionBuilder()
+      .withUrl("http://localhost:5092/quizhub")
+      .withAutomaticReconnect()
+      .build();
+
+    novaConexao.on("PartidaFinalizadaForcada", () => {
+      setJogoFinalizado(true);
+    });
+
+    novaConexao.on("SalaEncerrada", () => {
+      alert("O organizador encerrou a partida.");
+      navigate('/');
+    });
+
+    novaConexao.on("RankingAtualizado", (rankingData) => setRankingReal(rankingData));
+
+    novaConexao.start()
+      .then(() => novaConexao.invoke("ReingressarNoJogo", codigoSala))
+      .catch(err => console.error("Erro no SignalR:", err));
+
+    setConexao(novaConexao);
+
+    return () => novaConexao.stop();
+  }, [codigoSala, navigate]);
 
   useEffect(() => {
     api.get(`/quiz/${id}`).then(response => {
-      setQuiz(response.data);
-      if (response.data.perguntas && response.data.perguntas.length > 0) {
-        setTempoRestante(response.data.perguntas[0].tempoLimiteSegundos);
+      const quizData = response.data;
+      if (quizData.perguntas && quizData.perguntas.length > 0) {
+        quizData.perguntas.forEach(pergunta => {
+          if (pergunta.alternativas) {
+            pergunta.alternativas.sort(() => Math.random() - 0.5);
+          }
+        });
+        setQuiz(quizData);
+        setTempoRestante(quizData.perguntas[0].tempoLimiteSegundos);
       }
     }).catch(err => console.error("Erro ao carregar quiz:", err));
   }, [id]);
 
   const enviarResposta = async (tempoGasto, acertou) => {
     const perguntaAtual = quiz.perguntas[indicePergunta];
+    const isUltimaPergunta = indicePergunta + 1 >= quiz.perguntas.length;
 
     try {
       let pontosGanhos = 0;
-      
       if (acertou) {
         const response = await api.post(`/quiz/calcular-pontos?tempoLimite=${perguntaAtual.tempoLimiteSegundos}&tempoGasto=${tempoGasto}`);
         pontosGanhos = response.data.pontosGanhos;
       }
       
-      setPontuacaoTotal(prev => prev + pontosGanhos);
+      const novaPontuacao = pontuacaoTotal + pontosGanhos;
+      const novoTempoTotal = tempoTotalGasto + tempoGasto;
+      
+      setPontuacaoTotal(novaPontuacao);
+      setTempoTotalGasto(novoTempoTotal);
 
-      if (indicePergunta + 1 < quiz.perguntas.length) {
+      if (conexao && conexao.state === signalR.HubConnectionState.Connected) {
+        await conexao.invoke("AtualizarPontuacao", codigoSala, userName, avatar || "cat", novaPontuacao, novoTempoTotal, isUltimaPergunta);
+      }
+
+      if (!isUltimaPergunta) {
         setIndicePergunta(prev => prev + 1);
         setTempoRestante(quiz.perguntas[indicePergunta + 1].tempoLimiteSegundos);
       } else {
@@ -64,60 +118,109 @@ function Jogo() {
     }, 1500);
   };
 
-  // 4. Lógica do Cronômetro - CORRIGIDA
   useEffect(() => {
     if (jogoFinalizado || !quiz || statusResposta) return;
 
     if (tempoRestante <= 0) {
-      // O setTimeout aqui impede o "cascading renders" do React
       const esgotadoTimer = setTimeout(() => {
         setStatusResposta('errada'); 
-        
         setTimeout(() => {
           enviarResposta(quiz.perguntas[indicePergunta].tempoLimiteSegundos, false);
           setStatusResposta(null);
         }, 1500);
       }, 0);
-      
       return () => clearTimeout(esgotadoTimer);
     }
 
-    const timer = setInterval(() => {
-      setTempoRestante(prev => prev - 1);
-    }, 1000);
-
+    const timer = setInterval(() => setTempoRestante(prev => prev - 1), 1000);
     return () => clearInterval(timer);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tempoRestante, jogoFinalizado, quiz, statusResposta, indicePergunta]);
 
-  if (!quiz) return <div style={{ padding: '2rem' }}>Carregando jogo...</div>;
-
-  // Proteção contra Quizzes antigos sem perguntas
-  if (!quiz.perguntas || quiz.perguntas.length === 0) {
-    return (
-      <div style={{ padding: '2rem', fontFamily: 'system-ui', textAlign: 'center' }}>
-        <h2>⚠️ Oops! Este quiz está vazio ou é de uma versão antiga.</h2>
-        <button 
-          onClick={() => navigate('/')}
-          style={{ padding: '0.5rem 1rem', marginTop: '1rem', cursor: 'pointer', background: '#007bff', color: 'white', border: 'none', borderRadius: '4px' }}
-        >
-          Voltar ao Menu
-        </button>
-      </div>
-    );
-  }
+  if (!quiz) return <div className="p-10 text-center text-white text-2xl font-bold animate-pulse">Carregando jogo...</div>;
 
   if (jogoFinalizado) {
+    const getAvatarBg = (avatarName) => ({ cat: 'bg-orange-500', dog: 'bg-amber-600', rabbit: 'bg-pink-500', bird: 'bg-blue-500', fish: 'bg-cyan-500', bug: 'bg-emerald-500' }[avatarName] || 'bg-slate-500');
+
     return (
-      <div style={{ padding: '2rem', fontFamily: 'system-ui', textAlign: 'center' }}>
-        <h1>🏆 Fim de Jogo!</h1>
-        <h2>Pontuação Final: {pontuacaoTotal} pontos</h2>
-        <button 
-          onClick={() => navigate('/')}
-          style={{ padding: '1rem 2rem', fontSize: '1.2rem', marginTop: '2rem', cursor: 'pointer', background: '#007bff', color: 'white', border: 'none', borderRadius: '4px' }}
-        >
-          Voltar ao Menu
-        </button>
+      <div className="flex flex-col md:flex-row h-[calc(100vh-100px)] gap-6 p-4 max-w-7xl mx-auto w-full">
+        <div className="flex-1 flex flex-col bg-card/90 backdrop-blur-md rounded-3xl shadow-2xl border border-border overflow-hidden relative">
+          <div className="absolute top-0 left-0 w-full h-2 bg-linear-to-r from-purple-500 to-pink-500"></div>
+          
+          <div className="p-6 flex justify-between items-center border-b border-border bg-background/50">
+            <div>
+              <h2 className="text-2xl font-black uppercase tracking-wider">
+                Sala: <span className="text-primary">{codigoSala}</span>
+              </h2>
+              <p className="text-emerald-500 font-bold flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4"/> Você concluiu o quiz!
+              </p>
+            </div>
+            <div className="text-right">
+                <p className="text-xs text-muted-foreground uppercase font-bold">Sua Pontuação</p>
+                <p className="text-2xl font-black text-primary">{pontuacaoTotal} pts</p>
+            </div>
+          </div>
+
+          <div className="flex-1 flex items-end justify-center p-8 pb-12 gap-4 relative">
+             <Trophy className="absolute top-1/4 opacity-5 w-64 h-64 text-foreground pointer-events-none" />
+             
+             <AnimatePresence>
+                {rankingReal.length > 0 && (
+                    <div className="flex items-end gap-4 md:gap-8 z-10">
+                        {rankingReal[1] && (
+                          <motion.div initial={{ y: 200, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ type: 'spring' }} className="flex flex-col items-center">
+                            <div className={`w-16 h-16 rounded-full border-4 border-slate-300 shadow-xl ${getAvatarBg(rankingReal[1].avatar)}`}></div>
+                            <span className="font-bold mt-2 text-foreground">{rankingReal[1].nome}</span>
+                            <div className="w-24 md:w-32 h-32 bg-slate-400 dark:bg-slate-700 rounded-t-xl flex justify-center pt-2 text-4xl font-black text-white/30">2</div>
+                          </motion.div>
+                        )}
+                        {rankingReal[0] && (
+                          <motion.div initial={{ y: 300, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2, type: 'spring' }} className="flex flex-col items-center">
+                            <Crown className="text-amber-400 animate-bounce w-10 h-10 -mb-2" />
+                            <div className={`w-20 h-20 rounded-full border-4 border-amber-400 shadow-2xl ${getAvatarBg(rankingReal[0].avatar)}`}></div>
+                            <span className="font-black text-lg mt-2 text-foreground">{rankingReal[0].nome}</span>
+                            <div className="w-28 md:w-40 h-48 bg-amber-500 rounded-t-xl flex justify-center pt-2 text-6xl font-black text-white/30">1</div>
+                          </motion.div>
+                        )}
+                        {rankingReal[2] && (
+                          <motion.div initial={{ y: 150, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1, type: 'spring' }} className="flex flex-col items-center">
+                            <div className={`w-14 h-14 rounded-full border-4 border-orange-700 shadow-xl ${getAvatarBg(rankingReal[2].avatar)}`}></div>
+                            <span className="font-bold mt-2 text-foreground">{rankingReal[2].nome}</span>
+                            <div className="w-24 h-24 bg-orange-800 rounded-t-xl flex justify-center pt-2 text-3xl font-black text-white/30">3</div>
+                          </motion.div>
+                        )}
+                    </div>
+                )}
+             </AnimatePresence>
+          </div>
+        </div>
+
+        <div className="w-full md:w-80 bg-card/90 backdrop-blur-md rounded-3xl border border-border flex flex-col overflow-hidden shadow-2xl">
+            <div className="p-6 border-b border-border bg-background/50 flex items-center gap-2">
+                <Users className="w-5 h-5 text-primary" />
+                <h3 className="font-black uppercase tracking-tighter">Ranking Global</h3>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                {rankingReal.map((j, i) => (
+                    <motion.div 
+                        key={i} layout
+                        className={`flex items-center justify-between p-3 rounded-xl border ${j.nome === userName ? 'bg-primary/10 border-primary/50' : 'bg-background border-border'}`}
+                    >
+                        <div className="flex items-center gap-3">
+                            <span className="font-black text-muted-foreground text-xs">{i+1}º</span>
+                            <div className={`w-8 h-8 rounded-full ${getAvatarBg(j.avatar)}`}></div>
+                            <span className={`text-sm font-bold ${j.nome === userName ? 'text-primary' : 'text-foreground'}`}>
+                                {j.nome} {j.nome === userName && '(Você)'}
+                            </span>
+                        </div>
+                        <span className="font-black text-foreground">{j.pontuacao}</span>
+                    </motion.div>
+                ))}
+            </div>
+            <div className="p-4 bg-muted/50 text-center text-[10px] text-muted-foreground uppercase font-bold tracking-widest">
+                Aguardando organizador encerrar sala
+            </div>
+        </div>
       </div>
     );
   }
@@ -126,32 +229,35 @@ function Jogo() {
   const letras = ['A', 'B', 'C', 'D'];
 
   return (
-    <div style={{ padding: '2rem', fontFamily: 'system-ui', maxWidth: '600px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h3>Pergunta {indicePergunta + 1} de {quiz.perguntas.length}</h3>
-        <h2 style={{ color: tempoRestante <= 5 ? 'red' : 'black' }}>
-          ⏱️ {tempoRestante}s
-        </h2>
+    <div className="max-w-3xl mx-auto pt-8 pb-12 px-4">
+      <div className="flex justify-between items-end mb-6">
+        <div>
+          <p className="text-primary font-bold uppercase tracking-wider text-sm">Pergunta {indicePergunta + 1} de {quiz.perguntas.length}</p>
+          <p className="text-white font-bold">Pontos: {pontuacaoTotal}</p>
+        </div>
+        <div className={`flex items-center gap-2 text-3xl font-black bg-card px-6 py-3 rounded-2xl shadow-lg border-2 ${tempoRestante <= 5 ? 'text-red-500 border-red-500 animate-pulse' : 'text-foreground border-border'}`}>
+          <Timer className="w-8 h-8" />
+          {tempoRestante}s
+        </div>
       </div>
 
-      <div style={{ border: '2px solid #ccc', padding: '2rem', borderRadius: '8px', marginTop: '1rem', textAlign: 'center' }}>
-        <h2>{perguntaAtual.enunciado}</h2>
+      <motion.div key={indicePergunta} initial={{ x: 50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="bg-card text-card-foreground rounded-3xl shadow-xl p-8 border border-border">
+        <h2 className="text-2xl md:text-3xl font-black mb-8 text-center">{perguntaAtual.enunciado}</h2>
         
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '2rem' }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {perguntaAtual.alternativas?.map((alt, index) => {
-            let bgColor = '#f8f9fa';
-            let fontColor = '#333';
-            let borderColor = '#ccc';
+            let stateClass = "bg-background border-border hover:border-primary hover:bg-muted text-foreground";
+            let Icon = null;
 
             if (statusResposta) {
               if (alt.isCorreta) {
-                bgColor = '#28a745'; 
-                fontColor = 'white';
-                borderColor = '#28a745';
-              } else if (alternativaSelecionada === index && !alt.isCorreta) {
-                bgColor = '#dc3545'; 
-                fontColor = 'white';
-                borderColor = '#dc3545';
+                stateClass = "bg-emerald-500 border-emerald-600 text-white shadow-lg shadow-emerald-500/30";
+                Icon = CheckCircle2;
+              } else if (alternativaSelecionada === index) {
+                stateClass = "bg-red-500 border-red-600 text-white shadow-lg shadow-red-500/30";
+                Icon = XCircle;
+              } else {
+                stateClass = "bg-background/50 border-border/50 text-muted-foreground opacity-50";
               }
             }
 
@@ -160,30 +266,18 @@ function Jogo() {
                 key={index}
                 onClick={() => handleResponder(alt, index)}
                 disabled={!!statusResposta}
-                style={{ 
-                  padding: '1rem', 
-                  fontSize: '1.1rem', 
-                  textAlign: 'left',
-                  background: bgColor, 
-                  color: fontColor, 
-                  border: `2px solid ${borderColor}`, 
-                  borderRadius: '8px', 
-                  cursor: statusResposta ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.3s ease'
-                }}
+                className={`relative flex items-center p-6 text-lg font-bold border-2 rounded-2xl transition-all duration-300 text-left disabled:cursor-not-allowed active:scale-95 ${stateClass}`}
               >
-                <strong style={{ marginRight: '10px' }}>{letras[index]})</strong> {alt.texto}
+                <span className="w-10 h-10 flex items-center justify-center bg-black/10 rounded-full mr-4 text-xl">
+                  {letras[index]}
+                </span>
+                <span className="flex-1">{alt.texto}</span>
+                {Icon && <Icon className="w-8 h-8 absolute right-6 opacity-80" />}
               </button>
             );
           })}
         </div>
-      </div>
-
-      <div style={{ marginTop: '2rem', textAlign: 'right' }}>
-        <p>Pontuação atual: <strong>{pontuacaoTotal}</strong></p>
-      </div>
+      </motion.div>
     </div>
   );
 }
-
-export default Jogo;

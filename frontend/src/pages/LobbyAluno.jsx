@@ -1,18 +1,16 @@
-import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
-  User, Cat, Dog, Rabbit, Bird, Fish, Bug
-} from 'lucide-react';
+import { User, Cat, Dog, Rabbit, Bird, Fish, Bug } from 'lucide-react';
+import * as signalR from '@microsoft/signalr';
 
 export default function LobbyAluno() {
   const { codigo } = useParams();
-  const userName = localStorage.getItem("userName") || "User";
-  
-  // Estado para armazenar o avatar escolhido (null = padrão)
-  const [avatarSelecionado, setAvatarSelecionado] = useState(null);
+  const navigate = useNavigate();
+  const userName = localStorage.getItem("userName") || "Jogador";
+  const [avatarSelecionado, setAvatarSelecionado] = useState('cat'); // Padrão
+  const [conexao, setConexao] = useState(null);
 
-  // Lista de avatares com suas respectivas cores
   const avataresDisponiveis = [
     { id: 'cat', icone: Cat, cor: 'text-orange-500', bg: 'bg-orange-500/10', border: 'border-orange-500' },
     { id: 'dog', icone: Dog, cor: 'text-amber-600', bg: 'bg-amber-500/10', border: 'border-amber-600' },
@@ -22,7 +20,44 @@ export default function LobbyAluno() {
     { id: 'bug', icone: Bug, cor: 'text-emerald-500', bg: 'bg-emerald-500/10', border: 'border-emerald-500' }
   ];
 
-  // Identifica qual é o ícone atual para exibir em destaque
+  useEffect(() => {
+    const novaConexao = new signalR.HubConnectionBuilder()
+      .withUrl("http://localhost:5092/quizhub") // Atenção à porta!
+      .withAutomaticReconnect()
+      .build();
+
+    // Se o back-end recusar a conexão (sala não existe ou trancada)
+    novaConexao.on("ErroConexao", (mensagem) => {
+      alert(mensagem);
+      navigate('/'); // Manda de volta pro início
+    });
+
+    // Se o organizador começar o jogo
+    novaConexao.on("PartidaIniciada", (quizIdDoBanco) => {
+      navigate(`/jogo/${quizIdDoBanco}`, { 
+        state: { codigoSala: codigo, avatar: avatarSelecionado } 
+      });
+    });
+
+    // Se o organizador cancelar a sala
+    novaConexao.on("SalaEncerrada", () => {
+      alert("O organizador cancelou a sala.");
+      navigate('/');
+    });
+
+    novaConexao.start()
+      .then(() => {
+        // Tenta entrar na sala no C# assim que conecta
+        novaConexao.invoke("EntrarNaSala", codigo, userName, avatarSelecionado);
+      })
+      .catch(err => console.error("Erro no SignalR: ", err));
+
+    setConexao(novaConexao);
+
+    return () => novaConexao.stop();
+  }, [codigo, navigate, userName]);
+
+  // Resto do código de UI que a gente já tinha feito!
   const AvatarAtual = avatarSelecionado 
     ? avataresDisponiveis.find(a => a.id === avatarSelecionado).icone 
     : User;
@@ -38,29 +73,17 @@ export default function LobbyAluno() {
         animate={{ scale: 1, opacity: 1, y: 0 }}
         className="bg-card text-card-foreground rounded-3xl shadow-2xl p-8 max-w-lg w-full border border-border text-center relative overflow-hidden"
       >
-        {/* Borda superior decorativa */}
         <div className="absolute top-0 left-0 w-full h-2 bg-linear-to-r from-emerald-500 to-teal-500"></div>
 
-        {/* Status de espera animado */}
         <div className="flex justify-center mb-6 mt-4">
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10 px-6 py-2.5 rounded-full"
-          >
+          <motion.div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10 px-6 py-2.5 rounded-full">
             <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
-            <span>
-              Aguardando
-              <motion.span animate={{ opacity: [0, 1, 0] }} transition={{ duration: 1.5, repeat: Infinity, delay: 0 }}>.</motion.span>
-              <motion.span animate={{ opacity: [0, 1, 0] }} transition={{ duration: 1.5, repeat: Infinity, delay: 0.2 }}>.</motion.span>
-              <motion.span animate={{ opacity: [0, 1, 0] }} transition={{ duration: 1.5, repeat: Infinity, delay: 0.4 }}>.</motion.span>
-            </span>
+            <span>Aguardando organizador...</span>
           </motion.div>
         </div>
 
-        {/* Avatar em Destaque */}
         <motion.div 
-          key={avatarSelecionado} // Força a animação rodar quando o avatar muda
+          key={avatarSelecionado}
           initial={{ scale: 0.8, rotate: -10 }}
           animate={{ scale: 1, rotate: 0 }}
           type="spring"
@@ -74,16 +97,11 @@ export default function LobbyAluno() {
             <AvatarAtual className={`w-16 h-16 ${corAtual}`} strokeWidth={2.5} />
           </div>
           <h2 className="text-3xl font-black text-foreground">{userName}</h2>
-          <p className="text-muted-foreground font-medium mt-1 uppercase tracking-widest text-sm">
-            Sala: {codigo}
-          </p>
+          <p className="text-muted-foreground font-medium mt-1 uppercase tracking-widest text-sm">Sala: {codigo}</p>
         </motion.div>
 
-        {/* Seleção de Avatares */}
         <div className="border-t border-border pt-6 mt-6">
-          <p className="text-sm font-bold text-muted-foreground mb-4 uppercase tracking-wider">
-            Escolha seu avatar
-          </p>
+          <p className="text-sm font-bold text-muted-foreground mb-4 uppercase tracking-wider">Escolha seu avatar</p>
           <div className="grid grid-cols-3 gap-4">
             {avataresDisponiveis.map((avatar) => (
               <motion.button
@@ -102,7 +120,6 @@ export default function LobbyAluno() {
             ))}
           </div>
         </div>
-
       </motion.div>
     </div>
   );
