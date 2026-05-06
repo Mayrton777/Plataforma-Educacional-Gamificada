@@ -28,7 +28,8 @@ builder.Services.AddCors(options =>
         // O Vite/React para a porta 5173 padrão
         policy.WithOrigins("http://localhost:5173") 
               .AllowAnyHeader()
-              .AllowAnyMethod();
+              .AllowAnyMethod()
+              .AllowCredentials();
     });
 });
 
@@ -42,6 +43,9 @@ builder.Services.AddDbContext<QuizDbContext>(options =>
 // Injeção do Repositório e Serviço
 builder.Services.AddScoped<QuizGamificado.Domain.IRepositories.IQuizRepository, QuizGamificado.Infrastructure.Repositories.QuizRepository>();
 builder.Services.AddScoped<QuizGamificado.Application.Services.GamificacaoService>();
+
+// Adiciona os serviços do SignalR
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -57,5 +61,5 @@ if (app.Environment.IsDevelopment())
 
 // Configuração das rotas
 app.MapControllers();
-
+app.MapHub<API.Hubs.QuizHub>("/quizhub");
 app.Run();

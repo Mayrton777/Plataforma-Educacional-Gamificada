@@ -29,7 +29,7 @@ export default function Login() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-linear-to-br from-purple-500 to-pink-500 dark:from-blue-500 dark:to-purple-600 mb-4 shadow-lg">
             <LogIn className="w-8 h-8 text-white" />
           </div>
-          <h2 className="text-3xl font-black text-foreground">Área do Professor</h2>
+          <h2 className="text-3xl font-black text-foreground">Bem-vindo</h2>
           <p className="text-muted-foreground mt-2">Faça login para criar seu quiz</p>
         </div>
 

@@ -6,6 +6,8 @@ import Jogo from './pages/Jogo';
 import CriarQuiz from './pages/CriarQuiz';
 import Login from './pages/Login';
 import SalaEspera from './pages/SalaEspera';
+import EntrarSala from './pages/EntrarSala';
+import LobbyAluno from './pages/LobbyAluno';
 
 const RotaProtegida = ({ children }) => {
   const usuarioLogado = localStorage.getItem("userName");
@@ -29,6 +31,8 @@ function App() {
                 <Routes>
                   <Route path="/" element={<Menu />} />
                   <Route path="/login" element={<Login />} />
+                  <Route path="/entrar" element={<EntrarSala />} />
+                  <Route path="/lobby/:codigo" element={<LobbyAluno />} />
                   <Route path="/criar" element={<CriarQuiz />} />
                   <Route path="/jogo/:id" element={<Jogo />} />
                   <Route path="/sala/:codigo" element={<SalaEspera />} />
