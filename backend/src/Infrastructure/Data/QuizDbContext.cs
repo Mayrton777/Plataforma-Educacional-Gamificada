@@ -10,6 +10,7 @@ namespace QuizGamificado.Infrastructure.Data
         public DbSet<Quiz> Quizzes { get; set; }
         public DbSet<Pergunta> Perguntas { get; set; }
         public DbSet<Alternativa> Alternativas { get; set; }
+        public DbSet<Usuario> Usuarios { get; set; } // 👈 Nova Tabela adicionada aqui
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -50,6 +51,26 @@ namespace QuizGamificado.Infrastructure.Data
                       .WithMany(p => p.Alternativas)
                       .HasForeignKey(a => a.PerguntaId)
                       .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<Usuario>(entity =>
+            {
+                entity.ToTable("TB_USUARIO");
+                entity.HasKey(u => u.Id);
+                entity.Property(u => u.Nome).IsRequired().HasMaxLength(100);
+                entity.Property(u => u.Email).IsRequired().HasMaxLength(150);
+                entity.Property(u => u.Senha).IsRequired().HasMaxLength(50);
+
+                // Injeção do nosso usuário padrão direto no banco
+                entity.HasData(
+                    new Usuario
+                    {
+                        Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+                        Nome = "Avaliador",
+                        Email = "admin@tcc.com",
+                        Senha = "admin" 
+                    }
+                );
             });
         }
     }
