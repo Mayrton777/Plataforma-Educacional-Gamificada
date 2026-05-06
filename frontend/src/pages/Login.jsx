@@ -115,7 +115,7 @@ export default function Login() {
         <div className="mt-6 pt-6 border-t border-border text-center">
           <p className="text-muted-foreground mb-4">Ainda não tem uma conta?</p>
           <button
-            onClick={() => alert("A tela de cadastro será criada em breve!")}
+            onClick={() => navigate('/cadastro')}
             className="w-full h-14 flex items-center justify-center gap-2 text-lg font-bold bg-transparent border-2 border-border hover:bg-muted text-foreground rounded-xl transition-all active:scale-95"
           >
             <UserPlus className="w-5 h-5" />

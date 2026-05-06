@@ -4,6 +4,10 @@ using Scalar.AspNetCore;
 using System.Text.Json.Serialization;
 using API.Hubs; // Importa a pasta dos Hubs do SignalR
 
+// Carrega as variáveis do arquivo .env
+DotNetEnv.Env.Load();
+
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Configuração de Controllers e proteção contra Loop Infinito
