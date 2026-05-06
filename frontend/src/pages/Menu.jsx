@@ -1,45 +1,80 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { api } from '../services/api';
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { Plus, Users, Bot } from "lucide-react";
 
-function Menu() {
-  const [quizzes, setQuizzes] = useState([]);
-  const navigate = useNavigate(); // Hook para navegar entre telas
-
-  useEffect(() => {
-    api.get('/quiz')
-      .then(response => setQuizzes(response.data))
-      .catch(error => console.error("Erro ao buscar quizzes:", error));
-  }, []);
+export default function Menu() {
+  const navigate = useNavigate();
+  const userName = localStorage.getItem("userName") || "Desenvolvedor";
 
   return (
-    <div style={{ padding: '2rem', fontFamily: 'system-ui, sans-serif' }}>
-      <h1>🎮 Plataforma Educacional Gamificada</h1>
-      <p>Selecione um Quiz para jogar ou crie um novo.</p>
-      <hr style={{ margin: '2rem 0' }} />
-
-      <h2>Quizzes Disponíveis</h2>
-      {quizzes.length === 0 ? (
-        <p>Carregando ou nenhum quiz encontrado...</p>
-      ) : (
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          {quizzes.map(quiz => (
-            <div key={quiz.id} style={{ border: '1px solid #ccc', padding: '1rem', borderRadius: '8px', minWidth: '200px' }}>
-              <h3>{quiz.titulo}</h3>
-              <p>{quiz.perguntas?.length || 0} perguntas</p>
-              {/* O botão agora redireciona passando o ID do quiz na URL */}
-              <button 
-                onClick={() => navigate(`/jogo/${quiz.id}`)}
-                style={{ padding: '0.5rem 1rem', cursor: 'pointer', marginTop: '1rem', background: '#007bff', color: 'white', border: 'none', borderRadius: '4px' }}
-              >
-                Jogar
-              </button>
+    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-120px)] p-4">
+      <div className="max-w-5xl w-full">
+        
+        {/* Header */}
+        <motion.div
+          initial={{ y: -50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="text-center mb-16"
+        >
+          <div className="flex items-center justify-center gap-4 mb-6">
+            <div className="bg-white/20 dark:bg-black/20 rounded-full p-4 shadow-lg backdrop-blur-sm border border-white/30">
+              <Bot className="w-12 h-12 text-white" />
             </div>
-          ))}
+            {/* Título agora é branco para contrastar com o fundo vibrante */}
+            <h1 className="text-5xl md:text-6xl font-black text-white drop-shadow-lg">
+              Dev Education
+            </h1>
+          </div>
+          <p className="text-3xl font-bold text-white drop-shadow-md">Olá, {userName}! 👋</p>
+          <p className="text-xl text-white/90 mt-2 font-medium">O que você deseja fazer hoje?</p>
+        </motion.div>
+
+        {/* CTAs (Cards de Ação) */}
+        <div className="grid md:grid-cols-2 gap-8">
+          
+          <motion.button
+            initial={{ x: -100, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            whileHover={{ scale: 1.03, y: -5 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => navigate("/criar")}
+            className="bg-linear-to-br from-blue-500 to-indigo-600 dark:from-blue-700 dark:to-indigo-900 hover:from-blue-600 hover:to-indigo-700 rounded-3xl p-10 shadow-xl group relative overflow-hidden text-left border border-white/20"
+          >
+            <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+            <div className="relative z-10 flex flex-col items-center text-center">
+              <div className="bg-white/20 rounded-full w-20 h-20 flex items-center justify-center mb-6 backdrop-blur-sm border border-white/30 shadow-inner">
+                <Plus className="w-10 h-10 text-white" strokeWidth={3} />
+              </div>
+              <h2 className="text-3xl font-black text-white mb-3">Criar Quiz</h2>
+              <p className="text-lg text-white/90 font-medium">
+                Crie um novo jogo de perguntas e respostas
+              </p>
+            </div>
+          </motion.button>
+
+          <motion.button
+            initial={{ x: 100, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            whileHover={{ scale: 1.03, y: -5 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => navigate("/entrar")}
+            className="bg-linear-to-br from-emerald-500 to-teal-600 dark:from-emerald-700 dark:to-teal-900 hover:from-emerald-600 hover:to-teal-700 rounded-3xl p-10 shadow-xl group relative overflow-hidden text-left border border-white/20"
+          >
+            <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+            <div className="relative z-10 flex flex-col items-center text-center">
+              <div className="bg-white/20 rounded-full w-20 h-20 flex items-center justify-center mb-6 backdrop-blur-sm border border-white/30 shadow-inner">
+                <Users className="w-10 h-10 text-white" strokeWidth={3} />
+              </div>
+              <h2 className="text-3xl font-black text-white mb-3">Entrar em Sala</h2>
+              <p className="text-lg text-white/90 font-medium">
+                Participe de um quiz
+              </p>
+            </div>
+          </motion.button>
         </div>
-      )}
+      </div>
     </div>
   );
 }
-
-export default Menu;
