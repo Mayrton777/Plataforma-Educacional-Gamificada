@@ -68,7 +68,8 @@ namespace QuizGamificado.Infrastructure.Data
                         Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
                         Nome = "Avaliador",
                         Email = "admin@tcc.com",
-                        Senha = "admin" 
+                        Senha = "admin",
+                        EmailConfirmado = true
                     }
                 );
             });
