@@ -38,7 +38,7 @@ export default function Menu() {
             transition={{ delay: 0.2 }}
             whileHover={{ scale: 1.03, y: -5 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => navigate("/criar")}
+            onClick={() => navigate("/login")}
             className="bg-linear-to-br from-blue-500 to-indigo-600 dark:from-blue-700 dark:to-indigo-900 hover:from-blue-600 hover:to-indigo-700 rounded-3xl p-10 shadow-xl group relative overflow-hidden text-left border border-white/20"
           >
             <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
