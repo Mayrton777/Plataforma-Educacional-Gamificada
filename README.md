@@ -65,3 +65,9 @@ docker compose up -d --build
 ```
 4. Acesse a aplicação front-end através do navegador (geralmente em `http://localhost:5173`).
 5. A documentação interativa da API (Scalar) estará disponível em `ttp://localhost:5092/scalar/v1`.
+
+## 👨‍💻 Autor
+
+### Mayrton Eduardo Silva Rocha
+
+Graduando em Ciência da Computação
