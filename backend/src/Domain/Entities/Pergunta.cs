@@ -1,23 +1,17 @@
-using System;
-
 namespace QuizGamificado.Domain.Entities
 {
     public class Pergunta
     {
-        public Guid Id { get; private set; }
-        public string Enunciado { get; private set; }
-        public int TempoLimiteSegundos { get; private set; }
+        public Guid Id { get; set; } = Guid.NewGuid();
+        public string Enunciado { get; set; } = string.Empty;
+        public int TempoLimiteSegundos { get; set; }
         
         // Chave Estrangeira
-        public Guid QuizId { get; private set; }
-        public virtual Quiz Quiz { get; private set; } = null!;
+        public Guid QuizId { get; set; }
 
-        public Pergunta(string enunciado, int tempoLimiteSegundos, Guid quizId)
-        {
-            Id = Guid.NewGuid();
-            Enunciado = enunciado;
-            TempoLimiteSegundos = tempoLimiteSegundos;
-            QuizId = quizId;
-        }
+        // Propriedade de Navegação
+        public Quiz? Quiz { get; set; } 
+
+        public List<Alternativa> Alternativas { get; set; } = new();
     }
 }

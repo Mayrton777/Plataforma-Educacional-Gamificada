@@ -6,7 +6,12 @@ using System.Text.Json.Serialization;
 var builder = WebApplication.CreateBuilder(args);
 
 // Adiciona o suporte para Controllers
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // Impede o loop infinito na hora de gerar o JSON das entidades do EF Core
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    });
 
 // Adiciona o suporte para Controllers e resolve o problema de Loop Infinito do JSON
 builder.Services.AddControllers()

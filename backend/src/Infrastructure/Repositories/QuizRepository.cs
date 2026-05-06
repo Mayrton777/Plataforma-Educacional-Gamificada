@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using QuizGamificado.Domain.Entities;
 using QuizGamificado.Domain.IRepositories;
@@ -17,17 +14,21 @@ namespace QuizGamificado.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<Quiz> GetByIdAsync(Guid id)
+        public async Task<Quiz?> GetByIdAsync(Guid id)
         {
-            // O .Include é vital aqui para carregar as Perguntas junto com o Quiz!
+            // A tela do Jogo precisa de tudo: do Quiz, das Perguntas e das Alternativas!
             return await _context.Quizzes
                 .Include(q => q.Perguntas)
-                .FirstOrDefaultAsync(q => q.Id == id) ?? null!;
+                    .ThenInclude(p => p.Alternativas) // Inclui os "filhos" das perguntas
+                .FirstOrDefaultAsync(q => q.Id == id);
         }
 
         public async Task<IEnumerable<Quiz>> GetAllAsync()
         {
-            return await _context.Quizzes.ToListAsync();
+            // O Menu precisa saber quantas perguntas existem, então incluímos as Perguntas
+            return await _context.Quizzes
+                .Include(q => q.Perguntas) 
+                .ToListAsync();
         }
 
         public async Task AddAsync(Quiz quiz)

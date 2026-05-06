@@ -25,18 +25,38 @@ namespace QuizGamificado.API.Controllers
         }
 
         /// <summary>
-        /// Rota para o Educador criar um novo Quiz com suas perguntas.
+        /// Rota para o Educador criar um novo Quiz com suas perguntas e alternativas.
         /// </summary>
         [HttpPost]
         public async Task<IActionResult> CriarQuiz([FromBody] CriarQuizDto dto)
         {
-            // Instancia da entidade base Quiz
             var quiz = new Quiz(dto.Titulo);
 
             foreach (var perguntaDto in dto.Perguntas)
             {
-                // Usamos o construtor blindado que criamos na entidade Pergunta
-                var novaPergunta = new Pergunta(perguntaDto.Enunciado, perguntaDto.TempoLimiteSegundos, quiz.Id);
+                var novaPergunta = new Pergunta 
+                {
+                    Enunciado = perguntaDto.Enunciado,
+                    TempoLimiteSegundos = perguntaDto.TempoLimiteSegundos,
+                    QuizId = quiz.Id
+                };
+
+                // 👇 A PEÇA QUE FALTAVA: O laço para desempacotar as alternativas 👇
+                if (perguntaDto.Alternativas != null)
+                {
+                    foreach (var alternativaDto in perguntaDto.Alternativas)
+                    {
+                        var novaAlternativa = new Alternativa
+                        {
+                            Texto = alternativaDto.Texto,
+                            IsCorreta = alternativaDto.IsCorreta,
+                            PerguntaId = novaPergunta.Id // Associa a alternativa à pergunta
+                        };
+                        novaPergunta.Alternativas.Add(novaAlternativa);
+                    }
+                }
+                // 👆 FIM DA PEÇA QUE FALTAVA 👆
+
                 quiz.Perguntas.Add(novaPergunta);
             }
 
