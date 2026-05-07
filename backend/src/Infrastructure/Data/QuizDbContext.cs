@@ -10,7 +10,7 @@ namespace QuizGamificado.Infrastructure.Data
         public DbSet<Quiz> Quizzes { get; set; }
         public DbSet<Pergunta> Perguntas { get; set; }
         public DbSet<Alternativa> Alternativas { get; set; }
-        public DbSet<Usuario> Usuarios { get; set; } // 👈 Nova Tabela adicionada aqui
+        public DbSet<Usuario> Usuarios { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -61,7 +61,7 @@ namespace QuizGamificado.Infrastructure.Data
                 entity.Property(u => u.Email).IsRequired().HasMaxLength(150);
                 entity.Property(u => u.Senha).IsRequired().HasMaxLength(50);
 
-                // Injeção do nosso usuário padrão direto no banco
+                // Injeção do usuário padrão direto no banco
                 entity.HasData(
                     new Usuario
                     {

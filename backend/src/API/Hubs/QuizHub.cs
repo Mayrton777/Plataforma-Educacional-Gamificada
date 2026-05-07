@@ -59,15 +59,11 @@ public class QuizHub : Hub
         }
     }
 
-    // Adicione este método logo abaixo do IniciarPartida
     public async Task ReingressarNoJogo(string codigoSala)
     {
-        // Coloca o jogador de volta no grupo de comunicação do SignalR
-        // Ignora a trava "AbertaParaConexoes", pois ele já estava no lobby
         await Groups.AddToGroupAsync(Context.ConnectionId, codigoSala);
     }
 
-    // 👇 NOVO: Recebe a pontuação de cada aluno a cada resposta
     public async Task AtualizarPontuacao(string codigoSala, string nomeUsuario, string avatar, int pontuacao, int tempo, bool finalizou)
     {
         if (Salas.TryGetValue(codigoSala, out var sala))

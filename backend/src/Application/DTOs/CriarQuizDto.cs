@@ -12,8 +12,6 @@ namespace QuizGamificado.Application.DTOs
     {
         public string Enunciado { get; set; } = string.Empty;
         public int TempoLimiteSegundos { get; set; }
-        
-        // ESSA LINHA É CRUCIAL: Diz que a pergunta vem com uma lista de alternativas
         public List<CriarAlternativaDto> Alternativas { get; set; } = new();
     }
 

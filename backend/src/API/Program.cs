@@ -2,11 +2,9 @@ using Microsoft.EntityFrameworkCore;
 using QuizGamificado.Infrastructure.Data;
 using Scalar.AspNetCore;
 using System.Text.Json.Serialization;
-using API.Hubs; // Importa a pasta dos Hubs do SignalR
+using API.Hubs;
 
-// Carrega as variáveis do arquivo .env
 DotNetEnv.Env.Load();
-
 
 var builder = WebApplication.CreateBuilder(args);
 

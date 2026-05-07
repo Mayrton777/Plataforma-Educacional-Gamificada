@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using QuizGamificado.Domain.Entities;
 
 namespace QuizGamificado.Domain.IRepositories

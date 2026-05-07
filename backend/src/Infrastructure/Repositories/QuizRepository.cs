@@ -25,7 +25,6 @@ namespace QuizGamificado.Infrastructure.Repositories
 
         public async Task<IEnumerable<Quiz>> GetAllAsync()
         {
-            // O Menu precisa saber quantas perguntas existem, então incluímos as Perguntas
             return await _context.Quizzes
                 .Include(q => q.Perguntas) 
                 .ToListAsync();

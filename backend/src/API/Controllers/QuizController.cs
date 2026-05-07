@@ -9,7 +9,6 @@ using QuizGamificado.Domain.IRepositories;
 
 namespace QuizGamificado.API.Controllers
 {
-    // A rota será: http://localhost:PORTA/api/quiz
     [ApiController]
     [Route("api/[controller]")]
     public class QuizController : ControllerBase
@@ -25,7 +24,7 @@ namespace QuizGamificado.API.Controllers
         }
 
         /// <summary>
-        /// Rota para o Educador criar um novo Quiz com suas perguntas e alternativas.
+        /// Rota para o criar um novo Quiz com suas perguntas e alternativas.
         /// </summary>
         [HttpPost]
         public async Task<IActionResult> CriarQuiz([FromBody] CriarQuizDto dto)
@@ -41,7 +40,6 @@ namespace QuizGamificado.API.Controllers
                     QuizId = quiz.Id
                 };
 
-                // 👇 A PEÇA QUE FALTAVA: O laço para desempacotar as alternativas 👇
                 if (perguntaDto.Alternativas != null)
                 {
                     foreach (var alternativaDto in perguntaDto.Alternativas)
@@ -50,13 +48,11 @@ namespace QuizGamificado.API.Controllers
                         {
                             Texto = alternativaDto.Texto,
                             IsCorreta = alternativaDto.IsCorreta,
-                            PerguntaId = novaPergunta.Id // Associa a alternativa à pergunta
+                            PerguntaId = novaPergunta.Id
                         };
                         novaPergunta.Alternativas.Add(novaAlternativa);
                     }
                 }
-                // 👆 FIM DA PEÇA QUE FALTAVA 👆
-
                 quiz.Perguntas.Add(novaPergunta);
             }
 
