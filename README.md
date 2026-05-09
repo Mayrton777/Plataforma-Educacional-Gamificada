@@ -10,26 +10,27 @@ O projeto foi construído sob uma arquitetura Cliente-Servidor conteinerizada, c
 
 ```text
 /
-├── docker-compose.yml          # Orquestração dos contêineres (Banco, API e Front)
+├── docker-compose.yml          # Orquestração dos contêineres (Banco de Dados, API e Front-end)
 │
 ├── backend/                    # Solução .NET 9 (Back-end)
+│   ├── Dockerfile              # Instruções de construção da imagem do back-end
 │   ├── QuizGamificado.sln
 │   ├── src/
-│   │   ├── API/                # Camada de Apresentação: Controllers, rotas RESTful e injeção de dependências.
-│   │   ├── Application/        # Camada de Aplicação: Casos de uso, DTOs e serviços de negócio (ex: cálculo de pontos).
-│   │   ├── Domain/             # Camada de Domínio: Entidades puras do sistema (Aluno, Quiz, Pergunta) e interfaces.
-│   │   └── Infrastructure/     # Camada de Infraestrutura: Acesso a dados (Entity Framework Core), repositórios e banco.
+│   │   ├── API/                # Camada de Apresentação: Controllers (REST), SignalR Hubs (WebSockets) e injeção de dependências.
+│   │   ├── Application/        # Camada de Aplicação: Casos de uso, DTOs e serviços de negócio (ex: gamificação e cálculo de pontos).
+│   │   ├── Domain/             # Camada de Domínio: Entidades puras do sistema (UsuarioEducador, Participante, Quiz) e interfaces.
+│   │   └── Infrastructure/     # Camada de Infraestrutura: Acesso a dados (Entity Framework Core), repositórios e serviço SMTP.
 │   └── tests/                  # Testes unitários e de integração
 │
 └── frontend/                   # Projeto React (Front-end)
-    ├── Dockerfile
+    ├── Dockerfile              # Instruções de construção e serviço da imagem do front-end
     ├── package.json
     └── src/
         ├── assets/             # Recursos estáticos (imagens, ícones)
-        ├── components/         # Componentes React reutilizáveis (Botões, Temporizador, Cards)
-        ├── pages/              # Páginas completas (Dashboard Educador, Lobby, Quiz em andamento)
-        ├── services/           # Comunicação com a API RESTful (axios/fetch)
-        ├── App.jsx             # Roteamento principal
+        ├── components/         # Componentes React reutilizáveis (Botões, Temporizador, Cards, Navbar)
+        ├── pages/              # Páginas completas (Identificação, Painel Host, Lobby, Jogo)
+        ├── services/           # Comunicação Híbrida: chamadas RESTful (axios/fetch) e conexão persistente SignalR.
+        ├── App.jsx             # Roteamento principal e gestão de rotas protegidas
         └── main.jsx            # Ponto de entrada da aplicação React
 ```
 
