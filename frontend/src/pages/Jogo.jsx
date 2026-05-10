@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
-// 👇 A correção está aqui: Crown e Users foram adicionados aos imports!
-import { Timer, Trophy, CheckCircle2, XCircle, Crown, Users } from 'lucide-react';
+import { Trophy, CheckCircle2, XCircle, Crown, Users } from 'lucide-react';
 import * as signalR from '@microsoft/signalr';
+import Temporizador from '../components/Temporizador';
 
 export default function Jogo() {
   const { id } = useParams();
@@ -16,16 +16,16 @@ export default function Jogo() {
 
   const [quiz, setQuiz] = useState(null);
   const [indicePergunta, setIndicePergunta] = useState(0);
-  const [tempoRestante, setTempoRestante] = useState(0);
   const [pontuacaoTotal, setPontuacaoTotal] = useState(0);
   const [tempoTotalGasto, setTempoTotalGasto] = useState(0);
   const [jogoFinalizado, setJogoFinalizado] = useState(false);
-  
   const [statusResposta, setStatusResposta] = useState(null);
   const [alternativaSelecionada, setAlternativaSelecionada] = useState(null);
-  
   const [conexao, setConexao] = useState(null);
   const [rankingReal, setRankingReal] = useState([]);
+
+  // useRef guarda o tempo sem re-renderizar a página Jogo
+  const tempoRestanteRef = useRef(0);
 
   useEffect(() => {
     if (!codigoSala) return;
@@ -35,15 +35,11 @@ export default function Jogo() {
       .withAutomaticReconnect()
       .build();
 
-    novaConexao.on("PartidaFinalizadaForcada", () => {
-      setJogoFinalizado(true);
-    });
-
+    novaConexao.on("PartidaFinalizadaForcada", () => setJogoFinalizado(true));
     novaConexao.on("SalaEncerrada", () => {
       alert("O organizador encerrou a partida.");
       navigate('/');
     });
-
     novaConexao.on("RankingAtualizado", (rankingData) => setRankingReal(rankingData));
 
     novaConexao.start()
@@ -51,7 +47,6 @@ export default function Jogo() {
       .catch(err => console.error("Erro no SignalR:", err));
 
     setConexao(novaConexao);
-
     return () => novaConexao.stop();
   }, [codigoSala, navigate]);
 
@@ -59,13 +54,12 @@ export default function Jogo() {
     api.get(`/quiz/${id}`).then(response => {
       const quizData = response.data;
       if (quizData.perguntas && quizData.perguntas.length > 0) {
-        quizData.perguntas.forEach(pergunta => {
-          if (pergunta.alternativas) {
-            pergunta.alternativas.sort(() => Math.random() - 0.5);
-          }
+        quizData.perguntas.forEach(p => {
+          if (p.alternativas) p.alternativas.sort(() => Math.random() - 0.5);
         });
         setQuiz(quizData);
-        setTempoRestante(quizData.perguntas[0].tempoLimiteSegundos);
+        // Inicializa a ref com o tempo da primeira pergunta
+        tempoRestanteRef.current = quizData.perguntas[0].tempoLimiteSegundos;
       }
     }).catch(err => console.error("Erro ao carregar quiz:", err));
   }, [id]);
@@ -93,7 +87,8 @@ export default function Jogo() {
 
       if (!isUltimaPergunta) {
         setIndicePergunta(prev => prev + 1);
-        setTempoRestante(quiz.perguntas[indicePergunta + 1].tempoLimiteSegundos);
+        // Atualiza a ref para o tempo da próxima pergunta
+        tempoRestanteRef.current = quiz.perguntas[indicePergunta + 1].tempoLimiteSegundos;
       } else {
         setJogoFinalizado(true);
       }
@@ -106,7 +101,7 @@ export default function Jogo() {
     if (statusResposta) return;
 
     const acertou = alternativa.isCorreta;
-    const tempoGasto = quiz.perguntas[indicePergunta].tempoLimiteSegundos - tempoRestante;
+    const tempoGasto = quiz.perguntas[indicePergunta].tempoLimiteSegundos - tempoRestanteRef.current;
 
     setStatusResposta(acertou ? 'correta' : 'errada');
     setAlternativaSelecionada(index);
@@ -118,23 +113,14 @@ export default function Jogo() {
     }, 1500);
   };
 
-  useEffect(() => {
-    if (jogoFinalizado || !quiz || statusResposta) return;
-
-    if (tempoRestante <= 0) {
-      const esgotadoTimer = setTimeout(() => {
-        setStatusResposta('errada'); 
-        setTimeout(() => {
-          enviarResposta(quiz.perguntas[indicePergunta].tempoLimiteSegundos, false);
-          setStatusResposta(null);
-        }, 1500);
-      }, 0);
-      return () => clearTimeout(esgotadoTimer);
-    }
-
-    const timer = setInterval(() => setTempoRestante(prev => prev - 1), 1000);
-    return () => clearInterval(timer);
-  }, [tempoRestante, jogoFinalizado, quiz, statusResposta, indicePergunta]);
+  const handleTempoEsgotado = () => {
+    if (statusResposta) return;
+    setStatusResposta('errada'); 
+    setTimeout(() => {
+      enviarResposta(quiz.perguntas[indicePergunta].tempoLimiteSegundos, false);
+      setStatusResposta(null);
+    }, 1500);
+  };
 
   if (!quiz) return <div className="p-10 text-center text-white text-2xl font-bold animate-pulse">Carregando jogo...</div>;
 
@@ -143,6 +129,7 @@ export default function Jogo() {
 
     return (
       <div className="flex flex-col md:flex-row h-[calc(100vh-100px)] gap-6 p-4 max-w-7xl mx-auto w-full">
+        {/* Bloco de Jogo Finalizado - Mantido exatamente como o seu original */}
         <div className="flex-1 flex flex-col bg-card/90 backdrop-blur-md rounded-3xl shadow-2xl border border-border overflow-hidden relative">
           <div className="absolute top-0 left-0 w-full h-2 bg-linear-to-r from-purple-500 to-pink-500"></div>
           
@@ -235,10 +222,14 @@ export default function Jogo() {
           <p className="text-primary font-bold uppercase tracking-wider text-sm">Pergunta {indicePergunta + 1} de {quiz.perguntas.length}</p>
           <p className="text-white font-bold">Pontos: {pontuacaoTotal}</p>
         </div>
-        <div className={`flex items-center gap-2 text-3xl font-black bg-card px-6 py-3 rounded-2xl shadow-lg border-2 ${tempoRestante <= 5 ? 'text-red-500 border-red-500 animate-pulse' : 'text-foreground border-border'}`}>
-          <Timer className="w-8 h-8" />
-          {tempoRestante}s
-        </div>
+        
+        <Temporizador 
+          tempoLimite={perguntaAtual.tempoLimiteSegundos} 
+          ativo={!jogoFinalizado && !!quiz && !statusResposta}
+          onTempoEsgotado={handleTempoEsgotado}
+          onTick={(tempo) => tempoRestanteRef.current = tempo}
+        />
+
       </div>
 
       <motion.div key={indicePergunta} initial={{ x: 50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="bg-card text-card-foreground rounded-3xl shadow-xl p-8 border border-border">

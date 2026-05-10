@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # 1. O Banco de Dados
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: tcc_database
@@ -11,24 +10,20 @@ services:
     ports:
       - "1433:1433"
 
-  # 2. A sua API em C#
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: tcc_backend
     depends_on:
-      - sqlserver # Só liga depois que o banco ligar
+      - sqlserver
     environment:
-      # Sobrescrevemos a string de conexão para apontar para o container do SQL Server
       - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=QuizGamificadoDB;User Id=sa;Password=SenhaBancaTcc123!;TrustServerCertificate=True;
-      # Puxa os e-mails do arquivo .env
       - GMAIL_USER=${GMAIL_USER}
       - GMAIL_APP_PASSWORD=${GMAIL_APP_PASSWORD}
     ports:
-      - "5092:8080" # Mapeia a porta do container para a porta que o React espera
+      - "5092:8080"
 
-  # 3. O seu Front-end em React
   frontend:
     build:
       context: ./frontend
@@ -37,4 +32,4 @@ services:
     depends_on:
       - backend
     ports:
-      - "5173:80" # Mapeia a porta padrão que você pediu para a banca acessar
+      - "5173:80"
