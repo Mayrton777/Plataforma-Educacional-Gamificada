@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion'; 
-import { User, Cat, Dog, Rabbit, Bird, Fish, Bug, AlertTriangle } from 'lucide-react';
+import { User, Cat, Dog, Rabbit, Bird, Fish, Bug, AlertTriangle, XCircle } from 'lucide-react';
 import * as signalR from '@microsoft/signalr';
 
 export default function LobbyAluno() {
@@ -11,6 +11,7 @@ export default function LobbyAluno() {
   const [avatarSelecionado, setAvatarSelecionado] = useState('cat'); // Padrão
   const [conexao, setConexao] = useState(null);
   const [salaEncerrada, setSalaEncerrada] = useState(false);
+  const [erroConexao, setErroConexao] = useState(null);
 
   const avataresDisponiveis = [
     { id: 'cat', icone: Cat, cor: 'text-orange-500', bg: 'bg-orange-500/10', border: 'border-orange-500' },
@@ -23,14 +24,13 @@ export default function LobbyAluno() {
 
   useEffect(() => {
     const novaConexao = new signalR.HubConnectionBuilder()
-      .withUrl("http://localhost:5092/quizhub") // Atenção à porta!
+      .withUrl("http://localhost:5092/quizhub")
       .withAutomaticReconnect()
       .build();
 
     // Se o back-end recusar a conexão (sala não existe ou trancada)
     novaConexao.on("ErroConexao", (mensagem) => {
-      alert(mensagem);
-      navigate('/'); // Manda de volta pro início
+      setErroConexao(mensagem);
     });
 
     // Se o organizador começar o jogo
@@ -151,6 +151,44 @@ export default function LobbyAluno() {
                   onClick={() => {
                     setSalaEncerrada(false);
                     navigate('/'); // A navegação acontece ao confirmar a leitura
+                  }}
+                  className="w-full h-12 font-black tracking-wide bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl transition-colors"
+                >
+                  Voltar ao Início
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+        {erroConexao && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-card text-card-foreground rounded-3xl shadow-2xl p-6 md:p-8 max-w-sm w-full border border-border text-center"
+            >
+              <div className="flex justify-center mb-4">
+                <div className="bg-destructive/10 p-4 rounded-full">
+                  <XCircle className="w-10 h-10 text-destructive" />
+                </div>
+              </div>
+              
+              <h3 className="text-2xl font-bold mb-2">Não foi possível entrar</h3>
+              <p className="text-muted-foreground mb-8">
+                {erroConexao}
+              </p>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setErroConexao(null);
+                    navigate('/'); // Navega de volta ao confirmar
                   }}
                   className="w-full h-12 font-black tracking-wide bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl transition-colors"
                 >
