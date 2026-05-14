@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Timer, Crown, Users, XCircle } from 'lucide-react';
+import { Trophy, Timer, Crown, Users, XCircle, AlertTriangle } from 'lucide-react';
 import * as signalR from '@microsoft/signalr';
 import { api } from '../services/api';
 
@@ -13,6 +13,7 @@ export default function PainelHost() {
   const [jogadores, setJogadores] = useState([]);
   const [conexao, setConexao] = useState(null);
   const [tempoRestanteSala, setTempoRestanteSala] = useState(0);
+  const [mostrarModalEncerrar, setMostrarModalEncerrar] = useState(false);
 
   useEffect(() => {
     // 1. Calcula o tempo total do Quiz
@@ -49,7 +50,7 @@ export default function PainelHost() {
       const novoTempo = tempoRestanteSala - 1;
       setTempoRestanteSala(novoTempo);
       
-      // 👇 Envia o tempo para todos os alunos na sala
+      // Envia o tempo para todos os alunos na sala
       if (conexao && conexao.state === signalR.HubConnectionState.Connected) {
         conexao.invoke("SincronizarTempo", codigo, novoTempo);
       }
@@ -65,11 +66,10 @@ export default function PainelHost() {
     }
   };
 
-  const encerrarSala = async () => {
-    if (window.confirm("Encerrar sala e expulsar jogadores?")) {
-      if (conexao) await conexao.invoke("EncerrarSala", codigo);
-      navigate('/');
-    }
+  // Função que encerra a sala
+  const confirmarEncerramento = async () => {
+    if (conexao) await conexao.invoke("EncerrarSala", codigo);
+    navigate('/');
   };
 
   const podio = { primeiro: jogadores[0], segundo: jogadores[1], terceiro: jogadores[2] };
@@ -88,10 +88,15 @@ export default function PainelHost() {
               </div>
             </div>
           </div>
-          <button onClick={encerrarSala} className="flex items-center gap-2 px-4 py-2 bg-destructive/10 text-destructive font-bold rounded-xl hover:bg-destructive hover:text-white transition-all"><XCircle /> Encerrar</button>
+          <button 
+            onClick={() => setMostrarModalEncerrar(true)} 
+            className="flex items-center gap-2 px-4 py-2 bg-destructive/10 text-destructive font-bold rounded-xl hover:bg-destructive hover:text-white transition-all"
+          >
+            <XCircle /> Encerrar
+          </button>
         </div>
 
-        {/* Pódio (Reutilizando a lógica visual que já tínhamos) */}
+        {/* Pódio */}
         <div className="flex-1 flex items-end justify-center p-8 pb-12 gap-4 relative">
             <AnimatePresence>
                 {statusJogo === 'finalizado' ? (
@@ -106,13 +111,58 @@ export default function PainelHost() {
         </div>
       </div>
 
-      {/* Ranking lateral (Igual ao anterior) */}
+      {/* Ranking lateral */}
       <RankingLateral jogadores={jogadores} getAvatarBg={getAvatarBg} />
+
+      <AnimatePresence>
+        {mostrarModalEncerrar && (
+          <motion.div
+            key="modal-confirmacao"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-card text-card-foreground rounded-3xl shadow-2xl p-6 md:p-8 max-w-sm w-full border border-border text-center"
+            >
+              <div className="flex justify-center mb-4">
+                <div className="bg-destructive/10 p-4 rounded-full">
+                  <AlertTriangle className="w-10 h-10 text-destructive" />
+                </div>
+              </div>
+              
+              <h3 className="text-2xl font-bold mb-2">Encerrar Sala?</h3>
+              <p className="text-muted-foreground mb-8">
+                Tem certeza que deseja encerrar esta sala? Todos os jogadores conectados serão expulsos imediatamente.
+              </p>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setMostrarModalEncerrar(false)}
+                  className="flex-1 h-12 font-bold bg-muted hover:bg-muted/80 text-foreground rounded-xl transition-colors"
+                >
+                  Voltar
+                </button>
+                <button
+                  onClick={confirmarEncerramento}
+                  className="flex-1 h-12 font-bold bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-xl transition-colors"
+                >
+                  Sim, Encerrar
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-// Componentes menores para limpar o código
+// Componentes menores
 function PodioVisual({ jogadores, getAvatarBg }) {
     const p1 = jogadores[0], p2 = jogadores[1], p3 = jogadores[2];
     return (
